@@ -11,8 +11,8 @@ export const TransactionTable = () => {
   const [page, setPage] = useState(2);
   const [perPage, setPerPage] = useState(20);
   const [search, setSearch] = useState("");
-  const [transactions, setTransactions] = useState([])
-  const [total, setTotal] = useState(0)
+  const [transactions, setTransactions] = useState([]);
+  const [total, setTotal] = useState(0);
 
   const months = [
     "January",
@@ -28,8 +28,8 @@ export const TransactionTable = () => {
     "November",
     "December",
   ];
+  
   useEffect(() => {
-
     const analytics = async () => {
       const res = await axios.get(
         `http://localhost:5000/api/v1/analytics/${
@@ -45,46 +45,41 @@ export const TransactionTable = () => {
 
     analytics();
   }, [selectedMonth]);
-  
 
-
-  useEffect(()=>{
+  useEffect(() => {
     const transactionData = async () => {
-     
-
       const res = await axios.get(
         `http://localhost:5000/api/v1/transactions?page=${page}&perPage=${perPage}&search=${search}`
       );
 
       if (res.data.success) {
         setTransactions(res.data.transactions);
-        setTotal(res.data.total)
+        setTotal(res.data.total);
         console.log(res.data);
       }
     };
 
-  transactionData();
+    transactionData();
+  }, [page, perPage, search]);
 
-  },[page,perPage,search])
+  const numberOfPages = total / perPage;
 
-  const numberOfPages =  total / perPage ;
-
-  console.log(total / page)
-  const nextPage = ()=>{
-    if(page < numberOfPages){
-      setPage(page + 1)
-    }else{
-      return ;
+  console.log(total / page);
+  const nextPage = () => {
+    if (page < numberOfPages) {
+      setPage(page + 1);
+    } else {
+      return;
     }
-  }
+  };
 
-  const previousPage = ()=>{
-    if(page > 1){
-      setPage(page - 1) ;
-    }else{
-      return ;
+  const previousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    } else {
+      return;
     }
-  }
+  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -96,7 +91,7 @@ export const TransactionTable = () => {
   };
 
   const handlePerPageChange = (event) => {
-    const selectedPerPage = parseInt(event.target.value); 
+    const selectedPerPage = parseInt(event.target.value);
     setPerPage(selectedPerPage);
   };
 
@@ -116,6 +111,7 @@ export const TransactionTable = () => {
                   type="text"
                   placeholder="Search transaction"
                   className="border border-gray-300 outline-none px-2 py-1"
+                  onChange={(e)=>setSearch(e.target.value)}
                 />
                 <button className="text-sm font-semibold bg-yellow-300 py-1.5 px-4 rounded-md">
                   Search
@@ -160,61 +156,57 @@ export const TransactionTable = () => {
                   <th>Image</th>
                 </tr>
               </thead>
-              <tbody className="">
-
-
-                {
-                transactions.length !== 0 ? 
-                  transactions.map((item)=>(
+              <tbody>
+                {transactions.length !== 0 ? (
+                  transactions.map((item) => (
                     <tr className="border-b font-semibold border-gray-400 ">
-                  <td className="px-3 ">{item.id}</td>
-                  <td className="font-semibold w-1/4">{item.title}</td>
-                  <td className="text-xs w-1/5">
-                  {item.description}
-                  </td>
-                  <td>&#x20B9; {parseFloat(item.price.toFixed(2))}</td>
-                  <td>{item.category}</td>
-                  <td>{item.sold ? "Yes" : "No" }</td>
-                  <td>{formatDate(item.dateOfSale)}</td>
-                  <td className="py-2">
-                    <img
-                      src={item.image}
-                      className="w-32"
-                      alt=""
-                    />
-                  </td>
-                </tr>
-                  )) : 
-                  <div className=" py-12 text-center font-semibold">Loading...</div>
-                }
-
-                
-
-
+                      <td className="px-3 ">{item.id}</td>
+                      <td className="font-semibold w-1/4">{item.title}</td>
+                      <td className="text-xs w-1/5">{item.description}</td>
+                      <td>&#x20B9; {parseFloat(item.price.toFixed(2))}</td>
+                      <td>{item.category}</td>
+                      <td>{item.sold ? "Yes" : "No"}</td>
+                      <td>{formatDate(item.dateOfSale)}</td>
+                      <td className="py-2">
+                        <img src={item.image} className="w-32" alt="" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <div className=" py-12 text-center w-full font-semibold">
+                    Loading...
+                  </div>
+                )}
               </tbody>
             </table>
-          
           </div>
           <div className="flex justify-between px-2 font-semibold py-2 w-full">
+            <div>
+              <p>Page No: {page}</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={nextPage}>Next</button> -{" "}
+              <button onClick={previousPage}>Previous</button>
+            </div>
+            <div>
               <div>
-                <p>Page No: {page}</p>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={nextPage}>Next</button> - <button onClick={previousPage}>Previous</button>
-              </div>
-              <div>
-                <div>Per Page: 
-                  <select value={perPage} onChange={handlePerPageChange}  name="" id="">
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={30}>30</option>
-                    <option value={40}>40</option>
-                    <option value={50}>50</option>
-                    <option value={60}>60</option>
-                  </select>
-                </div>
+                Per Page:
+                <select
+                  value={perPage}
+                  onChange={handlePerPageChange}
+                  name=""
+                  id=""
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={40}>40</option>
+                  <option value={50}>50</option>
+                  <option value={60}>60</option>
+                </select>
               </div>
             </div>
+          </div>
         </div>
 
         <TransactionStatistics statisticsData={statisticsData} />
