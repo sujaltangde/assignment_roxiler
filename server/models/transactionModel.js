@@ -31,8 +31,12 @@ const transactionSchema = new mongoose.Schema({
     required: [true, "Please specify sold or not"],
   },
   dateOfSale: {
-    type: Date,
+    type: String, 
     required: [true, "Please enter date of sale"],
+  },
+  monthOfSale: {
+    type: Number,
+    required: [true, "Please enter month of sale"],
   },
 });
 

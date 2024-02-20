@@ -7,7 +7,15 @@ exports.initializeTransaction = async (req, res) => {
       "https://s3.amazonaws.com/roxiler.com/product_transaction.json"
     );
 
-    const transactions = response.data;
+    const transactions = response.data.map((transaction) => {
+      const date = new Date(transaction.dateOfSale);
+      const monthOfSale = parseInt(date.getMonth() + 1);
+
+      return {
+        ...transaction,
+        monthOfSale,
+      };
+    });
 
     await Transaction.insertMany(transactions);
 
@@ -24,19 +32,28 @@ exports.initializeTransaction = async (req, res) => {
   }
 };
 
+
 exports.transactions = async (req, res) => {
   try {
-    const { page, perPage, search } = req.query;
+    const { page, perPage, search, month } = req.query;
+    const targetMonth = parseInt(month);
     const query = {};
 
     if (search) {
-      const searchRegex = new RegExp(search, "i");
       const isNumeric = !isNaN(search);
-      query.$or = [
-        { title: searchRegex },
-        { description: searchRegex },
-        ...(isNumeric ? [{ price: parseFloat(search) }] : []),
-      ];
+      if (isNumeric) {
+        query.price = parseFloat(search);
+      } else {
+        const searchRegex = new RegExp(search, "i");
+        query.$or = [
+          { title: searchRegex },
+          { description: searchRegex }
+        ];
+      }
+    }
+
+    if (!isNaN(targetMonth)) {
+      query.monthOfSale = targetMonth;
     }
 
     const totalCount = await Transaction.countDocuments(query);
@@ -59,6 +76,47 @@ exports.transactions = async (req, res) => {
     });
   }
 };
+
+// exports.transactions = async (req, res) => {
+//   try {
+//     const { page, perPage, search, month } = req.query;
+//     const targetMonth = parseInt(month);
+//     const query = {};
+
+//     if (search) {
+//       const searchRegex = new RegExp(search, "i");
+//       const isNumeric = !isNaN(search);
+//       query.$or = [
+//         { title: searchRegex },
+//         { description: searchRegex },
+//         ...(isNumeric ? [{ price: parseFloat(search) }] : []),
+//       ];
+//     }
+
+//     if (!isNaN(targetMonth)) {
+//       query.monthOfSale = targetMonth;
+//     }
+
+//     const totalCount = await Transaction.countDocuments(query);
+
+//     const transactions = await Transaction.find(query)
+//       .skip((page - 1) * perPage)
+//       .limit(perPage);
+
+//     res.status(200).json({
+//       success: true,
+//       total: totalCount,
+//       page,
+//       perPage,
+//       transactions,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
 
 exports.statistics = async (req, res) => {
   try {
@@ -185,21 +243,20 @@ exports.pieChartData = async (req, res) => {
       return saleMonth === targetMonth;
     });
 
-
     const categoryCounts = {};
 
     data.forEach((item) => {
-        const category = item.category;
-        if (categoryCounts.hasOwnProperty(category)) {
-          categoryCounts[category]++;
-        } else {
-          categoryCounts[category] = 1;
-        }
+      const category = item.category;
+      if (categoryCounts.hasOwnProperty(category)) {
+        categoryCounts[category]++;
+      } else {
+        categoryCounts[category] = 1;
+      }
     });
 
     res.status(200).json({
       success: true,
-      categoryCounts
+      categoryCounts,
     });
   } catch (err) {
     res.status(500).json({
@@ -209,44 +266,36 @@ exports.pieChartData = async (req, res) => {
   }
 };
 
-
 exports.analytics = async (req, res) => {
-    try {
+  try {
+    const { month } = req.params;
 
-      const { month } = req.params;
+    const statisticsResponse = await axios.get(
+      "http://localhost:5000/api/v1/statistics/" + month
+    );
 
-      const statisticsResponse = await axios.get(
-        "http://localhost:5000/api/v1/statistics/" + month
-      );
-      
-      const barChartDataResponse = await axios.get(
-        "http://localhost:5000/api/v1/barChartData/" + month
-      );
+    const barChartDataResponse = await axios.get(
+      "http://localhost:5000/api/v1/barChartData/" + month
+    );
 
-      const pieChartDataResponse = await axios.get(
-        "http://localhost:5000/api/v1/pieChartData/" + month
-      );
-       
-      
+    const pieChartDataResponse = await axios.get(
+      "http://localhost:5000/api/v1/pieChartData/" + month
+    );
+
     const combinedData = {
-        statistics: statisticsResponse.data,
-        barChartData: barChartDataResponse.data,
-        pieChartData:  pieChartDataResponse.data
-      };
-  
-      res.status(200).json({
-        success: true,
-        combinedData
-      });
+      statistics: statisticsResponse.data,
+      barChartData: barChartDataResponse.data,
+      pieChartData: pieChartDataResponse.data,
+    };
 
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        message: err.message,
-      });
-    }
+    res.status(200).json({
+      success: true,
+      combinedData,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
-
-
-
-

@@ -8,11 +8,12 @@ export const TransactionTable = () => {
   const [selectedMonth, setSelectedMonth] = useState("March");
   const [statisticsData, setStatisticsData] = useState({});
   const [barChartData, setBarChartData] = useState({});
-  const [page, setPage] = useState(2);
-  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [total, setTotal] = useState(0);
+  const [success, setSuccess] = useState(false);
 
   const months = [
     "January",
@@ -28,7 +29,7 @@ export const TransactionTable = () => {
     "November",
     "December",
   ];
-  
+
   useEffect(() => {
     const analytics = async () => {
       const res = await axios.get(
@@ -49,22 +50,23 @@ export const TransactionTable = () => {
   useEffect(() => {
     const transactionData = async () => {
       const res = await axios.get(
-        `http://localhost:5000/api/v1/transactions?page=${page}&perPage=${perPage}&search=${search}`
+        `http://localhost:5000/api/v1/transactions?page=${page}&perPage=${perPage}&month=${
+          months.indexOf(selectedMonth) + 1
+        }&search=${search}`
       );
 
       if (res.data.success) {
         setTransactions(res.data.transactions);
+        setSuccess(res.data.success);
         setTotal(res.data.total);
-        console.log(res.data);
       }
     };
 
     transactionData();
-  }, [page, perPage, search]);
+  }, [page, perPage, search, selectedMonth]);
 
   const numberOfPages = total / perPage;
 
-  console.log(total / page);
   const nextPage = () => {
     if (page < numberOfPages) {
       setPage(page + 1);
@@ -99,36 +101,36 @@ export const TransactionTable = () => {
     <>
       <div className="min-h-screen ">
         <div className="flex justify-center items-center flex-col px-12 ">
-          <div className="bg-white w-1/3 flex gap-2 justify-center items-center text-2xl font-semibold py-5 mt-5 rounded-full">
+          <div className="bg-white w-1/3 shadow-md shadow-gray-300 flex gap-2 justify-center items-center text-2xl font-semibold py-5 mt-5 rounded-full">
             <p>Transaction</p>
             <p>Dashboard</p>
           </div>
 
           <div className="flex mt-12 justify-between w-full ">
             <div>
-              <div className="flex items-center justify-center gap-1">
+              <div className="flex items-center justify-center ">
+                <span className="text-sm font-semibold bg-yellow-300 rounded-r-none  rounded-md py-1.5 px-4 ">
+                  Search
+                </span>
                 <input
                   type="text"
                   placeholder="Search transaction"
-                  className="border border-gray-300 outline-none px-2 py-1"
-                  onChange={(e)=>setSearch(e.target.value)}
+                  className=" outline-none px-2 py-1 rounded-l-none rounded-md"
+                  onChange={(e) => setSearch(e.target.value)}
                 />
-                <button className="text-sm font-semibold bg-yellow-300 py-1.5 px-4 rounded-md">
-                  Search
-                </button>
               </div>
             </div>
             <div>
-              <div className="flex gap-1">
+              <div className="flex ">
                 <label
-                  className="text-sm font-semibold bg-yellow-300 py-1.5 px-4 rounded-md"
+                  className="text-sm font-semibold bg-yellow-300 py-1.5 px-4 rounded-r-none rounded-md"
                   htmlFor="monthSelect"
                 >
                   Select Month
                 </label>
                 <select
                   id="monthSelect"
-                  className="text-sm font-semibold bg-white py-1.5 px-4 rounded-md"
+                  className="text-sm font-semibold bg-white py-1.5 px-4 rounded-l-none rounded-md"
                   value={selectedMonth}
                   onChange={handleChange}
                 >
@@ -174,7 +176,7 @@ export const TransactionTable = () => {
                   ))
                 ) : (
                   <div className=" py-12 text-center w-full font-semibold">
-                    Loading...
+                    {success ? "No Data found" : "Loading..."}
                   </div>
                 )}
               </tbody>
@@ -210,7 +212,10 @@ export const TransactionTable = () => {
         </div>
 
         <TransactionStatistics statisticsData={statisticsData} />
-        <TransactionsBarChart barChartData={barChartData} />
+        <TransactionsBarChart
+          selectedMonth={selectedMonth}
+          barChartData={barChartData}
+        />
       </div>
     </>
   );
