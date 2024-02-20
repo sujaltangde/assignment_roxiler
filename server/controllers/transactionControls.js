@@ -26,7 +26,7 @@ exports.initializeTransaction = async (req, res) => {
 
 exports.transactions = async (req, res) => {
   try {
-    const { page = 1, perPage = 10, search } = req.query;
+    const { page, perPage, search } = req.query;
     const query = {};
 
     if (search) {
